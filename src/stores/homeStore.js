@@ -6,17 +6,20 @@ const homeStore = create((set) => ({
   coins: [],
   trending: [],
   query: '',
+  searching: false,
+  searched: false,
 
   setQuery: (e) => {
     set({ query: e.target.value });
     homeStore.getState().searchCoins();
   },
   searchCoins: debounce(async () => {
+    set({ searching: true });
     // here I'm searching for coins with a specific name
-    // and seting to the state that searched coins
+    // and seting to the state that searched coin
     // when the user delete the query then the trending coins shows again
     const { query, trending } = homeStore.getState();
-    if (query.length > 2) {
+    if (query.length > 0) {
       const res = await axios.get(
         `https://api.coingecko.com/api/v3/search?query=${query}`
       );
@@ -27,16 +30,20 @@ const homeStore = create((set) => ({
           id: coin.id,
         };
       });
-      set({ coins: coins });
+      set({ coins: coins, searching: false, searched: true });
     } else {
-      set({ coins: trending });
+      set({ coins: trending, searching: false, searched: false });
     }
   }, 400),
 
   fetchCoins: async () => {
-    const res = await axios.get(
-      'https://api.coingecko.com/api/v3/search/trending'
-    );
+    const [res, btcRes] = await Promise.all([
+      axios.get('https://api.coingecko.com/api/v3/search/trending'),
+      axios.get(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'
+      ),
+    ]);
+    const btcPrice = btcRes.data.bitcoin.usd;
     // I create an array of coins just with the info that I want and
     // then set that array to the coin state
     const coins = res.data.coins.map((coin) => {
@@ -44,7 +51,8 @@ const homeStore = create((set) => ({
         name: coin.item.name,
         image: coin.item.large,
         id: coin.item.id,
-        priceBtc: coin.item.price_btc,
+        priceBtc: coin.item.price_btc.toFixed(10),
+        priceUsd: (coin.item.price_btc * btcPrice).toFixed(10),
       };
     });
     set({ trending: coins, coins: coins });

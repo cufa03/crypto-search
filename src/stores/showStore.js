@@ -3,7 +3,10 @@ import { create } from 'zustand';
 
 const showStore = create((set) => ({
   graphData: [],
-  dataRes: [],
+  dataRes: null,
+  reset: () => {
+    set({ graphData: [], dataRes: null });
+  },
   fetchData: async (id) => {
     const [graphRes, dataRes] = await Promise.all([
       axios.get(
@@ -16,9 +19,9 @@ const showStore = create((set) => ({
 
     const graphData = graphRes.data.prices.map((price) => {
       const [timeStamp, p] = price;
-      const data = new Date(timeStamp).toLocaleDateString('en-us');
+      const date = new Date(timeStamp).toLocaleDateString('en-us');
       return {
-        date: data,
+        date: date,
         Price: p,
       };
     });
