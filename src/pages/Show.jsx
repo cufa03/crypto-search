@@ -86,7 +86,6 @@ const Show = () => {
               <div className="show-details-row">
                 <h3>1 year change</h3>
                 <span>
-                  $
                   {store.dataRes.market_data.price_change_percentage_1y.toFixed(
                     2
                   )}
